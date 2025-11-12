@@ -70,7 +70,7 @@ def show_current_star(data, index):
                     "comment": comment
                 }
 
-                st.json(payload)
+                #st.json(payload)
                 #st.write("即將送出的 payload：", payload)
 
 
