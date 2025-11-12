@@ -29,35 +29,7 @@ st.markdown(
         margin-bottom: 1rem;
     }
     
-    /* 確保按鈕在手機上保持同一行 - 使用更通用的選擇器 */
-    [data-testid="column"],
-    div[data-testid="column"],
-    .stColumns [data-testid="column"],
-    .element-container [data-testid="column"] {
-        flex: 1 1 0% !important;
-        min-width: 0 !important;
-        max-width: 33.33% !important;
-        flex-shrink: 1 !important;
-    }
-    /* 確保按鈕容器不會換行 - 針對所有可能的容器 */
-    .stColumns,
-    .stColumns > div,
-    div[data-testid="column-container"],
-    .element-container > div,
-    div[style*="display: flex"] {
-        display: flex !important;
-        flex-wrap: nowrap !important;
-        flex-direction: row !important;
-    }
-    /* 按鈕樣式調整，確保文字不換行 */
-    button[kind="secondary"],
-    button.stButton {
-        white-space: nowrap !important;
-        font-size: 0.9rem !important;
-        padding: 0.5rem 0.8rem !important;
-        width: 100% !important;
-        max-width: 100% !important;
-    }
+
     @media (max-width: 768px) {
         /* 手機上強制按鈕保持同一行 - 更強力的規則 */
         [data-testid="column"],
@@ -71,31 +43,7 @@ st.markdown(
             flex-shrink: 1 !important;
             flex-basis: 0 !important;
         }
-        /* 強制所有列容器不換行 */
-        .stColumns,
-        .stColumns > div,
-        div[data-testid="column-container"],
-        .element-container > div,
-        div[style*="display: flex"],
-        .stColumns > div[style*="display"],
-        *[class*="column"] {
-            display: flex !important;
-            flex-wrap: nowrap !important;
-            flex-direction: row !important;
-            width: 100% !important;
-        }
-        /* 按鈕樣式 */
-        button[kind="secondary"],
-        button.stButton {
-            font-size: 0.7rem !important;
-            padding: 0.3rem 0.4rem !important;
-            white-space: nowrap !important;
-            width: 100% !important;
-            max-width: 100% !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            min-width: 0 !important;
-        }
+       
     }
     </style>
     <h1 class="custom-title">✨ Web3 精選新聞 ✨</h1>
@@ -142,7 +90,7 @@ def show_current_star(data, index):
     row = data[index]    
 
     with st.session_state.star_container.container():
-        st.write(f"                   {row['日期']}")
+        st.write(f"{row['日期']}")
         # 分開顯示 NO.5 和標題，並為 NO.5 添加顏色
         st.markdown(
             f"""
@@ -153,8 +101,8 @@ def show_current_star(data, index):
             """,
             unsafe_allow_html=True
         )
-        st.write(f"url: {row['url']}")
-        st.write(f"ai評選原因: {row['ai評選原因']}")
+        st.write(f"{row['url']}")
+        st.write(f"{row['ai評選原因']}")
         st.write(f"分數: {row['分數']}")
         st.write(f"主題: {row['主題']}")
         #st.write(f"備註: {row['備註']}")
