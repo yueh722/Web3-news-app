@@ -166,7 +166,7 @@ with content_container:
                 <div style="margin-bottom: 0.5rem;">
                     <span style="color: #4facfe; font-weight: bold; font-size: 1.5rem;">📅 {st.session_state.current_date}</span>
                     <span style="color: #999; font-weight: normal; font-size: 0.95rem;">   [ 共 {total} 則 ]</span><br>
-                    <span style="color: #4facfe; font-weight: bold; font-size: 1.5rem;">SNo.  {idx + 1}</span>
+                    <span style="color: #4facfe; font-weight: bold; font-size: 1.5rem;">No.  {idx + 1}</span>
                 </div>
                 <h3>{row.get('標題', '無標題')}</h3>
                 <p style="color: #ccc; font-size: 0.9em;">{row.get('url', '')}</p>
