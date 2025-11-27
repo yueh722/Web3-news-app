@@ -117,7 +117,7 @@ with controls_container:
         # Add spacer to align button with input box (pushing it down by label height)
         # Increased to 38px to account for larger label font size
         st.markdown('<div style="height: 38px;"></div>', unsafe_allow_html=True)
-        if st.button("🔄 更新新聞", key="btn_update_news"):
+        if st.button("🔄 更新", key="btn_update_news"):
             # Show updating message in status container using a placeholder
             with status_container:
                 status_placeholder = st.empty()
@@ -163,8 +163,10 @@ with content_container:
         with st.container():
             st.markdown(f"""
             <div class="news-card">
-                <div style="color: #4facfe; font-weight: bold; margin-bottom: 0.5rem; font-size: 1.2rem;">
-                    📅 {st.session_state.current_date} | 📑 共 {total} 則 | 📌 第 {idx + 1} 則
+                <div style="margin-bottom: 0.5rem;">
+                    <span style="color: #4facfe; font-weight: bold; font-size: 1.5rem;">📅 {st.session_state.current_date}</span>
+                    <span style="color: #999; font-weight: normal; font-size: 0.95rem;">   [ 共 {total} 則 ]</span><br>
+                    <span style="color: #4facfe; font-weight: bold; font-size: 1.5rem;">SNo.  {idx + 1}</span>
                 </div>
                 <h3>{row.get('標題', '無標題')}</h3>
                 <p style="color: #ccc; font-size: 0.9em;">{row.get('url', '')}</p>
