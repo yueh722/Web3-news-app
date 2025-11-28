@@ -177,3 +177,89 @@ def inject_swipe_detection():
         """,
         height=0,
     )
+
+def inject_pwa_html():
+    """Inject PWA manifest link and service worker registration."""
+    st.components.v1.html(
+        """
+        <script>
+        // Register service worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/static/sw.js')
+                    .then(function(registration) {
+                        console.log('ServiceWorker registration successful:', registration.scope);
+                    })
+                    .catch(function(err) {
+                        console.log('ServiceWorker registration failed:', err);
+                    });
+            });
+        }
+        </script>
+        <link rel="manifest" href="/static/manifest.json">
+        """,
+        height=0,
+    )
+
+def inject_pwa_detection():
+    """
+    Inject JavaScript to detect PWA/standalone mode and communicate back to Streamlit.
+    Uses URL parameter manipulation to signal PWA mode to Streamlit.
+    """
+    st.components.v1.html(
+        """
+        <script>
+        (function() {
+            // Detect if running in PWA/standalone mode
+            function isPWA() {
+                // Method 1: Check display-mode media query (works for most browsers)
+                const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+                
+                // Method 2: iOS Safari fallback
+                const isIOSStandalone = ('standalone' in window.navigator) && window.navigator.standalone;
+                
+                return isStandalone || isIOSStandalone;
+            }
+            
+            const pwaMode = isPWA();
+            console.log('PWA Detection - Is PWA mode:', pwaMode);
+            
+            // Store in localStorage for persistence
+            localStorage.setItem('isPWA', pwaMode.toString());
+            
+            // If PWA mode detected and URL doesn't have the parameter yet, add it
+            if (pwaMode) {
+                const url = new URL(window.parent.location.href);
+                if (!url.searchParams.has('pwa_mode')) {
+                    console.log('Adding pwa_mode parameter to URL');
+                    url.searchParams.set('pwa_mode', 'true');
+                    window.parent.history.replaceState({}, '', url);
+                }
+            }
+        })();
+        </script>
+        """,
+        height=0,
+    )
+    
+    # Check for PWA mode from URL parameter using older Streamlit API
+    if "is_pwa" not in st.session_state:
+        try:
+            # Use experimental API which should be available  
+            if hasattr(st, 'experimental_get_query_params'):
+                params = st.experimental_get_query_params()
+                st.session_state.is_pwa = params.get('pwa_mode', ['false'])[0] == 'true'
+            else:
+                # Fallback to False if API not available
+                st.session_state.is_pwa = False
+        except Exception as e:
+            # If any error, default to browser mode
+            print(f"PWA detection error: {e}")
+            st.session_state.is_pwa = False
+
+def is_pwa():
+    """
+    Check if the app is running in PWA/standalone mode.
+    Returns True if in App/PWA mode, False if in Web browser mode.
+    """
+    return st.session_state.get("is_pwa", False)

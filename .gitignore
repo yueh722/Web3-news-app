@@ -17,6 +17,7 @@ token.json
 *.json
 !package.json
 !package-lock.json
+!manifest.json
 
 # IDE
 .vscode/
