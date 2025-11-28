@@ -30,32 +30,11 @@ if "current_date" not in st.session_state:
 # ====== Helper Functions ======
 def rerun():
     """Compatible rerun."""
-    if hasattr(st, 'rerun'):
-        st.rerun()
-    elif hasattr(st, 'experimental_rerun'):
-        st.experimental_rerun()
+    st.rerun()
 
 def handle_update():
     """Fetch news from n8n."""
     date_str = st.session_state.selected_date.strftime("%Y/%m/%d")
-    
-    # Use a placeholder to show updating status in the correct area
-    # We need to access the placeholder that is rendered below. 
-    # Since Streamlit renders top-to-bottom, we can't easily access a placeholder defined later.
-    # However, we can define the placeholder EARLY (before button) but that puts it above.
-    # OR we can use st.empty() at the top of the script and move it? No.
-    # BEST APPROACH: Just use st.toast or st.info at the top? User wants it in the status area.
-    # WORKAROUND: We will use a session state flag to show "Updating..." in the status area on rerun?
-    # But fetch happens inside the callback.
-    # Let's try to use `st.spinner` but explain to user it's standard behavior OR
-    # use `status_placeholder.info(...)` if we define it early.
-    # Given the layout constraint (Status below Button), we can define the placeholder 
-    # immediately after the button columns.
-    
-    # Actually, let's just use st.spinner for now as it's robust, 
-    # but we will try to make the status area show "Updating..." if possible.
-    # Since we can't easily update a container defined later, we will stick to spinner 
-    # but ensure the final message lands in the status area.
     
     # Fetch news directly (loading message handled in UI)
     result = st.session_state.news_service.fetch_news(date_str)
