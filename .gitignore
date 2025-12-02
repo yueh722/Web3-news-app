@@ -30,3 +30,5 @@ token.json
 .DS_Store
 Thumbs.db
 
+# Custom scripts
+push_changes.bat
