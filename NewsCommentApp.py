@@ -28,6 +28,10 @@ if "current_date" not in st.session_state:
     st.session_state.current_date = datetime.today().date()
 if "auto_fetched" not in st.session_state:
     st.session_state.auto_fetched = False
+if "status_message" not in st.session_state:
+    st.session_state.status_message = None
+if "status_type" not in st.session_state:
+    st.session_state.status_type = None
 
 # ====== Helper Functions ======
 def rerun():
@@ -43,19 +47,53 @@ def handle_update():
     
     # Fetch news directly (loading message handled in UI)
     result = st.session_state.news_service.fetch_news(date_str)
+    
+    # Get today's date for comparison
+    today = datetime.today().date()
+    selected = st.session_state.selected_date
         
     if result["status"] == "success":
         if "data" in result:
             st.session_state.today_rows = result["data"]
             st.session_state.current_index = 0
             st.session_state.current_date = date_str
+            
+            # Check if data is empty and set appropriate message
+            if not st.session_state.today_rows:
+                if selected <= today:
+                    # Past or today with no data
+                    st.session_state.status_message = "📭 本日無新聞資料 [0則]"
+                    st.session_state.status_type = "warning"
+                else:
+                    # Future date
+                    st.session_state.status_message = "📅 無此日期資料請重選日期"
+                    st.session_state.status_type = "warning"
+            else:
+                # Clear status message if data exists
+                st.session_state.status_message = None
+                st.session_state.status_type = None
         else:
             st.success(result.get("message", "操作成功"))
-    elif result["status"] in ["future_date", "no_news"]:
-        # Clear data so the UI doesn't show old news
+    else:
+        # Clear data on warning or error
         st.session_state.today_rows = []
-    elif result["status"] == "warning":
-        st.warning(result["message"])
+        
+        if result["status"] == "warning":
+            st.session_state.status_message = result["message"]
+            st.session_state.status_type = "warning"
+        elif result["status"] in ["future_date", "no_news"]:
+             # Map these specific statuses to messages if not already handled by logic above
+             # But fetch_news usually returns 'success' with empty data or specific status
+             # Let's handle the specific statuses if fetch_news returns them
+            if result["status"] == "future_date":
+                st.session_state.status_message = "📅 無此日期資料請重選日期"
+                st.session_state.status_type = "warning"
+            elif result["status"] == "no_news":
+                st.session_state.status_message = "📭 本日無新聞資料 [0則]"
+                st.session_state.status_type = "warning"
+        else:
+             st.session_state.status_message = result["message"]
+             st.session_state.status_type = "error"
     
     return result
 
@@ -104,23 +142,14 @@ def show_web_ui():
             result = handle_update()
             st.session_state.auto_fetched = True
             
-            if result["status"] == "success":
+            # Rerun to update UI with new state (data or status message)
+            # handle_update sets st.session_state.status_message, so we just need to rerun
+            if result["status"] == "success" or st.session_state.status_message:
                 status_placeholder.empty()
                 rerun()
-            elif result["status"] == "future_date":
-                status_placeholder.markdown(
-                    '<div class="status-area" style="background-color: #ff9800; color: white;">📅 無此日期資料請重選日期</div>',
-                    unsafe_allow_html=True
-                )
-            elif result["status"] == "no_news":
-                status_placeholder.markdown(
-                    '<div class="status-area" style="background-color: #ff9800; color: white;">📭 本日無新聞資料 [0則]</div>',
-                    unsafe_allow_html=True
-                )
-            elif result["status"] == "warning":
-                status_placeholder.warning(result["message"])
             else:
-                status_placeholder.error(result["message"])
+                # Fallback for unexpected states
+                status_placeholder.error(result.get("message", "Unknown error"))
     
     # 2. Control Panel (Date & Update)
     with controls_container:
@@ -146,31 +175,36 @@ def show_web_ui():
                     # Perform update
                     result = handle_update()
                     
-                    if result["status"] == "success":
-                        # Clear message and rerun to show content
+                    # Rerun to update UI with new state (data or status message)
+                    if result["status"] == "success" or st.session_state.status_message:
                         status_placeholder.empty()
                         rerun()
-                    elif result["status"] == "future_date":
-                        # Future date - show orange warning
-                        status_placeholder.markdown(
-                            '<div class="status-area" style="background-color: #ff9800; color: white;">📅 無此日期資料請重選日期</div>',
-                            unsafe_allow_html=True
-                        )
-                    elif result["status"] == "no_news":
-                        # No news but valid date - show orange warning
-                        status_placeholder.markdown(
-                            '<div class="status-area" style="background-color: #ff9800; color: white;">📭 本日無新聞資料 [0則]</div>',
-                            unsafe_allow_html=True
-                        )
-                    elif result["status"] == "warning":
-                        status_placeholder.warning(result["message"])
                     else:
-                        status_placeholder.error(result["message"])
+                        status_placeholder.error(result.get("message", "Unknown error"))
     
     # 3. Status Bar (Below Controls)
+    # 3. Status Bar (Below Controls)
     with status_container:
-        # Only show message if no data
-        if not st.session_state.today_rows:
+        # Show status message if set
+        if st.session_state.status_message:
+            if st.session_state.status_type == "warning":
+                # Orange warning box
+                st.markdown(
+                    f'<div class="status-area" style="background-color: #e69138; color: white; padding: 1rem; border-radius: 0.5rem; text-align: center;">{st.session_state.status_message}</div>',
+                    unsafe_allow_html=True
+                )
+            elif st.session_state.status_type == "error":
+                 st.markdown(
+                    f'<div class="status-area" style="background-color: #dc3545; color: white; padding: 1rem; border-radius: 0.5rem; text-align: center;">{st.session_state.status_message}</div>',
+                    unsafe_allow_html=True
+                )
+            else:
+                st.markdown(
+                    f'<div class="status-area">{st.session_state.status_message}</div>',
+                    unsafe_allow_html=True
+                )
+        elif not st.session_state.today_rows:
+            # Default message if no data and no status message
             st.markdown('<div class="status-area">', unsafe_allow_html=True)
             st.markdown(
                 '<div style="color: #FFFFFF; font-weight: bold; font-size: 1.2rem;">請點擊「更新」以取得內容</div>',
