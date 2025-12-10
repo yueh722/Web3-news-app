@@ -130,7 +130,7 @@ def show_web_ui():
     with header_container:
         st.markdown('<h1 class="custom-title">✨ Web3 精選新聞 ✨</h1>', unsafe_allow_html=True)
 
-    # Auto-fetch on load
+    # Auto-fetch on load (only once per session)
     if not st.session_state.auto_fetched:
         with status_container:
             status_placeholder = st.empty()
@@ -139,8 +139,10 @@ def show_web_ui():
                 unsafe_allow_html=True
             )
             
-            result = handle_update()
+            # CRITICAL: Set flag BEFORE calling handle_update to prevent re-triggering on rerun
             st.session_state.auto_fetched = True
+            
+            result = handle_update()
             
             # Rerun to update UI with new state (data or status message)
             # handle_update sets st.session_state.status_message, so we just need to rerun
@@ -229,7 +231,11 @@ def show_web_ui():
                         <span style="color: #4facfe; font-weight: bold; font-size: 1.5rem;">No.  {idx + 1}</span>
                     </div>
                     <h3>{row.get('標題', '無標題')}</h3>
-                    <p style="color: #ccc; font-size: 0.9em;">{row.get('url', '')}</p>
+                    <p style="color: #ccc; font-size: 0.9em;">
+                        <a href="{row.get('url', '')}" target="_blank" style="color: #4facfe; text-decoration: none;">
+                            {row.get('url', '')}
+                        </a>
+                    </p>
                     <hr style="border-color: #004080;">
                     <p><strong>💡 AI 評選原因:</strong><br>{row.get('ai評選原因', '')}</p>
                     <p><strong>🎯 分數:</strong> {row.get('分數', '')} | <strong>🏷️ 主題:</strong> {row.get('主題', '')}</p>
