@@ -296,3 +296,73 @@ def log_to_console(message):
     </script>
     """
     st.components.v1.html(js_code, height=0, width=0)
+
+def inject_visibility_auto_fetch():
+    """
+    Inject JS to detect visibility and click the hidden 'StartAutoFetch' button.
+    This ensures auto-fetch only happens when a user is actually viewing the page.
+    """
+    st.components.v1.html(
+        """
+        <script>
+        function triggerFetch() {
+            const buttons = window.parent.document.querySelectorAll('button');
+            buttons.forEach(btn => {
+                // Find the specific button by its text content
+                if (btn.innerText === "StartAutoFetch") {
+                    btn.click();
+                }
+            });
+        }
+
+        function checkAndTrigger() {
+            // Only trigger if visible
+            if (document.visibilityState === 'visible') {
+                triggerFetch();
+            }
+        }
+        
+        // Hide the button visuals immediately using JS (safer than CSS selectors)
+        // We run this periodically or on load to ensure button is hidden
+        function hideFetchButton() {
+            const buttons = window.parent.document.querySelectorAll('button');
+            buttons.forEach(btn => {
+                if (btn.innerText === "StartAutoFetch") {
+                    btn.style.position = 'absolute';
+                    btn.style.opacity = '0';
+                    btn.style.height = '0';
+                    btn.style.width = '0';
+                    btn.style.padding = '0';
+                    btn.style.margin = '0';
+                    btn.style.overflow = 'hidden';
+                    btn.setAttribute('tabindex', '-1'); // Remove from tab order
+                }
+            });
+        }
+
+        // Run on load
+        window.addEventListener('load', function() {
+            hideFetchButton();
+            checkAndTrigger();
+        });
+        
+        // Run on visibility change (for background tabs coming into focus)
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') {
+                checkAndTrigger();
+            }
+        });
+
+        // Run immediately in case of race conditions
+        hideFetchButton();
+        checkAndTrigger();
+        
+        // Observer to hide button if it appears later (dynamically rendered)
+        const observer = new MutationObserver(function(mutations) {
+            hideFetchButton();
+        });
+        observer.observe(window.parent.document.body, { childList: true, subtree: true });
+        </script>
+        """,
+        height=0
+    )

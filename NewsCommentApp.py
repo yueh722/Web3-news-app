@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import datetime
 from news_service import NewsService
-from utils import inject_custom_css, inject_swipe_detection, inject_pwa_html, inject_pwa_detection, is_pwa, log_to_console
+from utils import inject_custom_css, inject_swipe_detection, inject_pwa_html, inject_pwa_detection, is_pwa, log_to_console, inject_visibility_auto_fetch
 
 # ====== 配置與設定 ======
 st.set_page_config(page_title="Web3 News", page_icon="📰", layout="centered")
@@ -157,34 +157,40 @@ def show_web_ui():
     # 1. 標題
     with header_container:
         st.markdown('<h1 class="custom-title">✨ Web3 精選新聞 ✨</h1>', unsafe_allow_html=True)
-
-    # 載入時自動獲取（每個 Session 僅一次）
+    
+    # 智慧自動更新邏輯：
+    # 當 auto_fetched 為 False 時，顯示一個隱藏按鈕 "StartAutoFetch"
+    # 並注入 JS 來偵測可見度，只有當頁面可見時，JS 才會點擊該按鈕觸發更新。
     if not st.session_state.auto_fetched:
-        try:
-            log_to_console(f"🚀 [{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Auto-fetch triggered - first load")
-        except:
-            pass
-        with status_container:
-            status_placeholder = st.empty()
-            status_placeholder.markdown(
-                f'<div class="status-area" style="background-color: #e69138; color: white;">正在自動更新 {st.session_state.selected_date.strftime("%Y/%m/%d")} 的新聞...</div>', 
-                unsafe_allow_html=True
-            )
+        # 1. 產生一個隱藏按鈕 (CSS/JS 會把它藏起來)
+        # 用 key 確保唯一性
+        if st.button("StartAutoFetch", key="btn_trigger_auto_fetch"):
+            # 當被點擊時 (表示前端 JS 偵測到可見了)
+            try:
+                log_to_console(f"� [{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Visibility detected - Triggering auto-fetch")
+            except:
+                pass
             
-            # 關鍵：在呼叫 handle_update 之前設定旗標，以防止重新執行時再次觸發
-            st.session_state.auto_fetched = True
-            
-            result = handle_update()
-            
-            # 重新執行以更新 UI（資料或狀態訊息）
-            # handle_update 設定了 st.session_state.status_message，所以我們只需要重新執行
-            if result["status"] == "success" or st.session_state.status_message:
-                status_placeholder.empty()
-                rerun()
-            else:
-                # 意外狀態的備案
-                status_placeholder.error(result.get("message", "Unknown error"))
-
+            with status_container:
+                status_placeholder = st.empty()
+                status_placeholder.markdown(
+                    f'<div class="status-area" style="background-color: #e69138; color: white;">正在自動更新 {st.session_state.selected_date.strftime("%Y/%m/%d")} 的新聞...</div>', 
+                    unsafe_allow_html=True
+                )
+                
+                # 設定旗標防止重複
+                st.session_state.auto_fetched = True
+                
+                result = handle_update()
+                
+                if result["status"] == "success" or st.session_state.status_message:
+                    status_placeholder.empty()
+                    rerun()
+                else:
+                    status_placeholder.error(result.get("message", "Unknown error"))
+        
+        # 2. 注入 JS 偵測邏輯
+        inject_visibility_auto_fetch()
     
     # 2. 控制面板（日期與更新）
     with controls_container:
